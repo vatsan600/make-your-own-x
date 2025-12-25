@@ -224,18 +224,29 @@ func tokenToNfa(t *token) (*state, *state) {
 	switch t.tokenType {
 	case literal:
 		ch := t.value.(uint8)
-		start.transitions[ch] = []*state {end}
+		start.transitions[ch] = []*state{end}
 	case or:
 		values := t.value.([]token)
 		left := values[0]
-		right :=values[1]
+		right := values[1]
 		s1, e1 := tokenToNfa(&left)
 		s2, e2 := tokenToNfa(&right)
-		start.transitions[epsilonChar] = [] *state{s1,s2}
-		e1.transitions[epsilonChar] = [] * state {end}
-		e2.transitions[epsilonChar] = [] * state {end}
+		start.transitions[epsilonChar] = []*state{s1, s2}
+		e1.transitions[epsilonChar] = []*state{end}
+		e2.transitions[epsilonChar] = []*state{end}
 	case bracket:
+		literals := t.value.(map[uint8]bool)
+		for l := range literals {
+			start.transitions[l] = []*state{end}
+		}
 	case group, groupUncaptured:
+		tokens := t.value.([]token)
+		start, end = tokenToNfa(&tokens[0])
+		for i := 1; i < len(tokens); i++ {
+			ts, te := tokenToNfa(&tokens[i])
+			end.transitions[epsilonChar] = append(end.transitions[epsilonChar], ts)
+			end = te
+		}
 	case repeat:
 	default:
 		panic("unkown type of token")
