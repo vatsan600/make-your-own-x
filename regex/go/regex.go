@@ -248,6 +248,13 @@ func tokenToNfa(t *token) (*state, *state) {
 			end = te
 		}
 	case repeat:
+		tokens := t.value.([]token)
+		start, end = tokenToNfa(&tokens[0])
+		for i := 1; i < len(tokens); i++ {
+			ts, te := tokenToNfa(&tokens[i])
+			end.transitions[epsilonChar] = append(end.transitions[epsilonChar], ts)
+			end = te
+		}
 	default:
 		panic("unkown type of token")
 	}
